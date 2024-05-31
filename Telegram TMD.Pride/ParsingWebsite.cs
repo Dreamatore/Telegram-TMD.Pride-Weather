@@ -6,7 +6,7 @@ namespace Telegram_TMD.Pride
         public static WeatherResponse? ReadWeather(string namecity)
         {
             
-            string URL = $"https://api.openweathermap.org/data/2.5/weather?q={namecity}&appid=&lang=ru&units=metric";
+            string URL = $"https://api.openweathermap.org/data/2.5/weather?q={namecity}&appid={ApplicationSettings.APIKeyWeather}&lang=ru&units=metric";
 
             string responseBody = ReadJson(URL);
 

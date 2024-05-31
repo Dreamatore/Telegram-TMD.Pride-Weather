@@ -8,7 +8,7 @@ namespace Telegram_TMD.Pride
 {
     class TelegramBot
     {
-        private static TelegramBotClient client = new TelegramBotClient("");
+        private static TelegramBotClient client = new TelegramBotClient(ApplicationSettings.APIKeyTelegram);
 
         public void WorkBot()
         {
@@ -19,7 +19,7 @@ namespace Telegram_TMD.Pride
 
         }
 
-        
+
         async Task OnMessageHandler(object sender, Update update, CancellationToken cancellationToken)
         {
             var msg = update.Message;
@@ -33,23 +33,39 @@ namespace Telegram_TMD.Pride
                     {
                         await client.SendTextMessageAsync(msg.Chat.Id, "Привет! Я телеграмм бот TMD.Pride от SPD.Riot, который выполнит любое твоё пожелание относительно погоды. Чтобы начать, укажите название нужного города!");
                     }
+                    else if (msg.Text == "/d")
+                    {
+                        var city = DataBase.ReadCity(msg.Chat.Id);
+                        if (city == "")
+                        {
+                            await client.SendTextMessageAsync(msg.Chat.Id, "Город не установлен, либо ещё не сохранён");
+                        }
+                        var weather = ParsingWebsite.ReadWeather(city);
+
+                        if (weather == null) return;
+                        var res = string.Join(",", weather.Weather.Select(x => x.Description).FirstOrDefault(), weather.Main.FeelsLike);
+
+                        await client.SendTextMessageAsync(msg.Chat.Id, res);
+                    }
                     else
                     {
-                        //var IDcity = SearchCity.SearchID(msg.Text.ToLower());
 
-                        
-                        
-                            var weather = ParsingWebsite.ReadWeather(msg.Text);
 
-                            if (weather == null) return;
+
+                        DataBase.UpdateCity(msg.Chat.Id, msg.Text);
+
+                        var weather = ParsingWebsite.ReadWeather(msg.Text);
+
+                        if (weather == null) return;
                         var res = string.Join(",", weather.Weather.Select(x => x.Description).FirstOrDefault(), weather.Main.FeelsLike);
-                        
-                        await client.SendTextMessageAsync(msg.Chat.Id, res);
-                           
-                        
-                    }
 
+                        await client.SendTextMessageAsync(msg.Chat.Id, res);
+
+
+                    }
                 }
+
+
             }
             catch { Console.WriteLine("TMD.Pride ERROR | Произошла ошибка! (или закончились API calls) | " + msg.Text); }
 
@@ -57,7 +73,7 @@ namespace Telegram_TMD.Pride
         }
 
 
-       
+
         Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
         {
             var ErrorMessage = exception switch
